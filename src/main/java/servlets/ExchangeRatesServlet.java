@@ -27,7 +27,6 @@ public class ExchangeRatesServlet extends HttpServlet {
         result.ifPresent(exchangeRates -> pw.println(new Gson().toJson(exchangeRates)));
     }
 
-
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         PrintWriter pw = resp.getWriter();
@@ -38,14 +37,18 @@ public class ExchangeRatesServlet extends HttpServlet {
 
         if(validateExchangeRate(newExchangeRate)) {
             CurrencyDAO currencyDAO = new CurrencyDAOImplSQLite();
+            //Trying to get currencies corresponds to this exchange rate
             Optional<Currency> baseCurrency = currencyDAO.getByCode(newExchangeRate.getBaseCurrency().getCode());
             Optional<Currency> targetCurrency = currencyDAO.getByCode(newExchangeRate.getTargetCurrency().getCode());
-
+            //If there are both currencies - continue exchange rate creation
             if(baseCurrency.isPresent() && targetCurrency.isPresent()) {
                 ExchangeRateDAO exchangeRateDAO = new ExchangeRateDAOImplSQLite();
+                //if the rate for the same currency pair already exists
                 if(exchangeRateDAO.getByCurrencyPair(newExchangeRate.getBaseCurrency().getCode(), newExchangeRate.getTargetCurrency().getCode()).isPresent()) {
-
+                    resp.setStatus(409);
+                    pw.println(new Gson().toJson(new ErrorMessage("Валютная пара с таким кодом уже существует ")));
                 } else {
+                    //adding the exchange rate to the database
                     boolean result = exchangeRateDAO.add(newExchangeRate);
                     if(result) {
                         resp.setStatus(201);
@@ -60,7 +63,6 @@ public class ExchangeRatesServlet extends HttpServlet {
                 pw.println(new Gson().toJson(new ErrorMessage("Одна (или обе) валюта из валютной пары не существует в БД")));
             }
 
-
         } else {
             resp.setStatus(400);
             pw.println(new Gson().toJson(new ErrorMessage("Отсутствует одно из обязательных полей")));
@@ -68,6 +70,7 @@ public class ExchangeRatesServlet extends HttpServlet {
 
     }
 
+    //Function checks if exchangeRate parameter has all required fields
     private boolean validateExchangeRate(ExchangeRate exchangeRate) {
         if(exchangeRate.getBaseCurrency().getCode() == null || exchangeRate.getBaseCurrency().getCode().isEmpty())
             return false;
