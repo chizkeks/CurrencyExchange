@@ -1,6 +1,8 @@
 package servlets;
 
 import com.google.gson.Gson;
+import dao.CurrencyDAO;
+import dao.CurrencyDAOImplSQLite;
 import model.Currency;
 import model.ErrorMessage;
 import services.CurrencyExchangeDBService;
@@ -24,11 +26,11 @@ public class CurrencyServlet extends HttpServlet {
         String[] pathElements = req.getPathInfo().split("/");
 
         if(pathElements.length == 2){
-            CurrencyExchangeDBService dbService = new CurrencyExchangeDBService();
+            CurrencyDAO dao = new CurrencyDAOImplSQLite();
 
             //for url http://localhost:8080/CurrencyExchange/currency/RUR pathElements = [, RUR]
             //that's why we pass pathElements[1] to the function
-            Optional<Currency> result = dbService.getCurrencyByCode(pathElements[1]);
+            Optional<Currency> result = dao.getByCode(pathElements[1]);
             if(result.isPresent()) {
                 pw.println(new Gson().toJson(result.get()));
             } else {

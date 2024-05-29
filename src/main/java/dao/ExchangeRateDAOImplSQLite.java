@@ -20,9 +20,16 @@ public class ExchangeRateDAOImplSQLite implements ExchangeRateDAO{
             " FROM exchange_rates er INNER JOIN currencies c1 on er.basecurrencyid = c1.id" +
             " INNER JOIN currencies c2 on er.targetcurrencyid = c2.id;";
 
-    private static final String INSERT_DATA = "INSERT INTO exchange_rates VALUES(NULL, '%s', '%s', %.2f)";
+    private static final String INSERT_DATA = "INSERT INTO exchange_rates VALUES(NULL, '%s', '%s', %.2f);";
 
-    private static final String SELECT_BY_CURRENCY_PAIR = "SELECT id FROM exchange_rates WHERE basecurrencyid = '%s' AND targetcurrencyid = '%s'";
+    private static final String SELECT_BY_CURRENCY_PAIR = "SELECT er.id as exchange_rate_id, c1.id as basecur_id, c1.fullname as basecur_fullname," +
+            " c1.code as basecur_code, c1.sign as basecur_sign," +
+            " c2.id as targetcur_id, c2.fullname as targetcur_fullname," +
+            " c2.code as targetcur_code, c2.sign as targetcur_sign, er.rate" +
+            " FROM exchange_rates er INNER JOIN currencies c1 on er.basecurrencyid = c1.id" +
+            " INNER JOIN currencies c2 on er.targetcurrencyid = c2.id" +
+            " WHERE c1.code = '%s' AND c2.code = '%s';";
+
     static {
         try {
             Class.forName("org.sqlite.JDBC");

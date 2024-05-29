@@ -22,8 +22,8 @@ public class ExchangeRatesServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         PrintWriter pw = resp.getWriter();
-        CurrencyExchangeDBService dbService = new CurrencyExchangeDBService();
-        Optional<List<ExchangeRate>> result = dbService.getAllExchangeRates();
+        ExchangeRateDAO dao = new ExchangeRateDAOImplSQLite();
+        Optional<List<ExchangeRate>> result = dao.getList();
         result.ifPresent(exchangeRates -> pw.println(new Gson().toJson(exchangeRates)));
     }
 
