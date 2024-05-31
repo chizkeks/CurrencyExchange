@@ -30,6 +30,7 @@ public class ExchangeRateDAOImplSQLite implements ExchangeRateDAO{
             " INNER JOIN currencies c2 on er.targetcurrencyid = c2.id" +
             " WHERE c1.code = '%s' AND c2.code = '%s';";
 
+    private static final String UPDATE_RATE_BY_CURRENCY_PAIR = "UPDATE TABLE exchange_rates SET rate = %.2f WHERE basecurrencyid = %d AND targetcurrencyid = %d;";
     static {
         try {
             Class.forName("org.sqlite.JDBC");
@@ -56,8 +57,13 @@ public class ExchangeRateDAOImplSQLite implements ExchangeRateDAO{
         return this.dbClient.selectForList(SELECT_ALL);
     }
 
-    public Optional<ExchangeRate> getByCurrencyPair(String baseCurrencyCode, String targetCurrencyCode) {
+    @Override
+    public Optional<ExchangeRate> getByCurrencyPairCode(String baseCurrencyCode, String targetCurrencyCode) {
         List<ExchangeRate> result = this.dbClient.selectForList(String.format(SELECT_BY_CURRENCY_PAIR, baseCurrencyCode, targetCurrencyCode)).orElseGet(ArrayList::new);
         return result.isEmpty() ? Optional.empty() : Optional.of(result.get(0));
+    }
+
+    public boolean updateRateByCurrencyPairId(long baseCurrenccyID, long targetCurrencyID, double rate) {
+        return dbClient.run(String.format(UPDATE_RATE_BY_CURRENCY_PAIR, rate, baseCurrenccyID, targetCurrencyID));
     }
 }

@@ -9,5 +9,6 @@ import java.util.Optional;
 public interface ExchangeRateDAO {
     public boolean add(ExchangeRate value);
     public Optional<List<ExchangeRate>> getList();
-    public Optional<ExchangeRate>  getByCurrencyPair(String baseCurrencyCode, String targetCurrencyCode);
+    public Optional<ExchangeRate>  getByCurrencyPairCode(String baseCurrencyCode, String targetCurrencyCode);
+    public boolean updateRateByCurrencyPairId (long baseCurrenccyID, long targetCurrencyID, double rate);
 }
