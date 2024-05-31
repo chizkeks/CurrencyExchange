@@ -44,7 +44,7 @@ public class ExchangeRatesServlet extends HttpServlet {
             if(baseCurrency.isPresent() && targetCurrency.isPresent()) {
                 ExchangeRateDAO exchangeRateDAO = new ExchangeRateDAOImplSQLite();
                 //if the rate for the same currency pair already exists
-                if(exchangeRateDAO.getByCurrencyPair(newExchangeRate.getBaseCurrency().getCode(), newExchangeRate.getTargetCurrency().getCode()).isPresent()) {
+                if(exchangeRateDAO.getByCurrencyPairCode(newExchangeRate.getBaseCurrency().getCode(), newExchangeRate.getTargetCurrency().getCode()).isPresent()) {
                     resp.setStatus(409);
                     pw.println(new Gson().toJson(new ErrorMessage("Валютная пара с таким кодом уже существует ")));
                 } else {
@@ -52,7 +52,7 @@ public class ExchangeRatesServlet extends HttpServlet {
                     boolean result = exchangeRateDAO.add(newExchangeRate);
                     if(result) {
                         resp.setStatus(201);
-                        pw.println(new Gson().toJson(exchangeRateDAO.getByCurrencyPair(newExchangeRate.getBaseCurrency().getCode(), newExchangeRate.getTargetCurrency().getCode()).isPresent()));
+                        pw.println(new Gson().toJson(exchangeRateDAO.getByCurrencyPairCode(newExchangeRate.getBaseCurrency().getCode(), newExchangeRate.getTargetCurrency().getCode()).isPresent()));
                     } else {
                         resp.setStatus(500);
                     }
