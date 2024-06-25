@@ -54,6 +54,7 @@ public class ExchangeRateServlet  extends HttpServlet {
     @Override
     protected void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         String method = req.getMethod();
+        System.out.println(method);
         if(!method.equals("PATCH"))
             super.service(req, resp);
 
@@ -70,10 +71,11 @@ public class ExchangeRateServlet  extends HttpServlet {
             //check required fields
             BufferedReader br = new BufferedReader(new InputStreamReader(req.getInputStream()));
             String data = br.readLine();
+            System.out.println(data);
             String newRate  = "";
             if(newRate == null || newRate.isEmpty()) {
                 resp.setStatus(400);
-                pw.println(new Gson().toJson(new ErrorMessage("Отсутствует нужное поле формы")));
+                pw.println(new Gson().toJson(new ErrorMessage(data)));
                 return;
             }
 

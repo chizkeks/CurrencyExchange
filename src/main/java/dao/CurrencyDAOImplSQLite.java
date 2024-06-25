@@ -22,7 +22,7 @@ public class CurrencyDAOImplSQLite implements CurrencyDAO{
             e.printStackTrace();
         }
 
-        CONNECTION_URL = "jdbc:sqlite:" + CurrencyDAOImplSQLite.class.getClassLoader().getResource("db/currency_exchange_db");
+        CONNECTION_URL = "jdbc:sqlite:" + CurrencyDAOImplSQLite.class.getResource("/db/currency_exchange_db");
     }
 
     public CurrencyDAOImplSQLite() {

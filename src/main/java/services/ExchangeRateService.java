@@ -4,7 +4,6 @@ import dao.CurrencyDAO;
 import dao.CurrencyDAOImplSQLite;
 import dao.ExchangeRateDAO;
 import dao.ExchangeRateDAOImplSQLite;
-import model.Currency;
 import model.ExchangeRate;
 
 import java.util.List;
