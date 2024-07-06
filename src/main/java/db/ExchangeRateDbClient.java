@@ -1,9 +1,9 @@
-package dao;
+package db;
 
 import model.Currency;
 import model.ExchangeRate;
+import utils.DBConnectionManager;
 
-import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -13,10 +13,9 @@ import java.util.List;
 import java.util.Optional;
 
 public class ExchangeRateDbClient {
-    private DataSource dataSource;
-    public ExchangeRateDbClient(DataSource dataSource) {this.dataSource = dataSource;}
+    public ExchangeRateDbClient() {}
     public boolean run(String query){
-        try(Connection connection = dataSource.getConnection();
+        try(Connection connection = DBConnectionManager.getConnection();
             Statement statement = connection.createStatement();) {
             connection.setAutoCommit(true);
             statement.execute(query);
@@ -27,9 +26,9 @@ public class ExchangeRateDbClient {
         }
     }
 
-    public Optional<List<ExchangeRate>> selectForList(String query) {
+    public Optional<List<ExchangeRate>> selectForList(String query){
         List<ExchangeRate> exchangeRates = new ArrayList<>();
-        try(Connection connection = dataSource.getConnection();
+        try(Connection connection = DBConnectionManager.getConnection();
             Statement statement = connection.createStatement();
             ResultSet resultSetItem = statement.executeQuery(query);) {
 
@@ -42,8 +41,8 @@ public class ExchangeRateDbClient {
             }
             return Optional.of(exchangeRates);
         } catch(SQLException e) {
-            e.printStackTrace();
+           e.printStackTrace();
+           return Optional.empty();
         }
-        return Optional.empty();
     }
 }
