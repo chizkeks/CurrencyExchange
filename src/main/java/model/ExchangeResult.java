@@ -1,18 +1,20 @@
 package model;
 
+import java.math.BigDecimal;
+
 public class ExchangeResult {
     private Currency baseCurrency;
     private Currency targetCurrency;
     private double rate;
     private double amount;
-    private double convertedAmount;
+    private BigDecimal convertedAmount;
 
     public ExchangeResult(Currency baseCurrency, Currency targetCurrency, double rate, double amount) {
         this.baseCurrency = baseCurrency;
         this.targetCurrency = targetCurrency;
         this.rate = rate;
         this.amount = amount;
-        this.convertedAmount = rate * amount;
+        this.convertedAmount = new BigDecimal(rate * amount);
     }
 
     public Currency getBaseCurrency() {
@@ -47,7 +49,7 @@ public class ExchangeResult {
         this.amount = amount;
     }
 
-    public double getConvertedAmount() {
+    public BigDecimal getConvertedAmount() {
         return convertedAmount;
     }
 
