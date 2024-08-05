@@ -1,6 +1,8 @@
 package db;
 
+import exceptions.DatabaseConnectionException;
 import model.Currency;
+import org.sqlite.SQLiteException;
 import utils.DBConnectionManager;
 
 import java.sql.Connection;
@@ -13,22 +15,27 @@ import java.util.Optional;
 
 public class CurrencyDbClient {
     public CurrencyDbClient() {}
-    public boolean run(String query){
+    public void run(String query) throws SQLException, DatabaseConnectionException, SQLiteException
+    {
         try(Connection connection = DBConnectionManager.getConnection()) {
             try(Statement statement = connection.createStatement()) {
                 connection.setAutoCommit(true);
                 statement.execute(query);
-                return true;
             } catch (SQLException e) {
                 e.printStackTrace();
+                System.out.println(e.getMessage());
+                throw new SQLException(e);
             }
         } catch(SQLException e) {
             e.printStackTrace();
+            System.out.println(e.getMessage());
+            throw new DatabaseConnectionException(e);
+
         }
-        return false;
     }
 
-    public Optional<List<Currency>> selectForList(String query){
+    public Optional<List<Currency>> selectForList(String query) throws SQLException, DatabaseConnectionException
+    {
         List<Currency> currencies = new ArrayList<>();
         try(Connection connection = DBConnectionManager.getConnection()) {
             try (Statement statement = connection.createStatement();
@@ -42,10 +49,14 @@ public class CurrencyDbClient {
                 }
                 return Optional.of(currencies);
             } catch(SQLException e) {
+                //throw new SQLException(e);
                 e.printStackTrace();
+                System.out.println(e.getMessage());
             }
         } catch(SQLException e) {
             e.printStackTrace();
+            System.out.println(e.getMessage());
+            throw new DatabaseConnectionException(e);
         }
         return Optional.empty();
     }

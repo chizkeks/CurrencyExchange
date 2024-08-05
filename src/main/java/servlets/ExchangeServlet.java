@@ -41,7 +41,7 @@ public class ExchangeServlet extends HttpServlet {
             Optional<?> fromCurrency = currencyService.getCurrency(from);
             Optional<?> toCurrency = currencyService.getCurrency(to);
 
-            if(fromCurrency.isEmpty() || toCurrency.isEmpty()) {
+            if(fromCurrency.isEmpty() && toCurrency.isEmpty()) {
                 resp.setStatus(404);
                 pw.println(new Gson().toJson(new ErrorMessage("Валютная пара отсутствует в базе данных")));
                 return;

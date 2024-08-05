@@ -45,6 +45,6 @@ public class CurrencyServlet extends HttpServlet {
         }
         //If there are more than 1 path parameter throw an error
         resp.setStatus(400);
-        pw.println(new Gson().toJson(new ErrorMessage("Некорректный запрос")));
+        pw.println(new Gson().toJson(new ErrorMessage("Некорректный запрос. Код валюты отсутствует в адресе")));
     }
 }

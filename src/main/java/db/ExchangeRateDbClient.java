@@ -1,5 +1,6 @@
 package db;
 
+import exceptions.DatabaseConnectionException;
 import model.Currency;
 import model.ExchangeRate;
 import utils.DBConnectionManager;
@@ -14,19 +15,26 @@ import java.util.Optional;
 
 public class ExchangeRateDbClient {
     public ExchangeRateDbClient() {}
-    public boolean run(String query){
-        try(Connection connection = DBConnectionManager.getConnection();
-            Statement statement = connection.createStatement();) {
-            connection.setAutoCommit(true);
-            statement.execute(query);
-            return true;
+    public void run(String query) throws SQLException, DatabaseConnectionException
+    {
+        try(Connection connection = DBConnectionManager.getConnection();) {
+            try (Statement statement = connection.createStatement();) {
+                connection.setAutoCommit(true);
+                statement.execute(query);
+            } catch(SQLException e) {
+                e.printStackTrace();
+                System.out.println(e.getMessage());
+                throw new SQLException(e);
+            }
         } catch(SQLException e) {
             e.printStackTrace();
-            return false;
+            System.out.println(e.getMessage());
+            throw new DatabaseConnectionException(e);
         }
     }
 
-    public Optional<List<ExchangeRate>> selectForList(String query){
+    public Optional<List<ExchangeRate>> selectForList(String query) //throws SQLException, DatabaseConnectionException
+    {
         List<ExchangeRate> exchangeRates = new ArrayList<>();
         try(Connection connection = DBConnectionManager.getConnection();
             Statement statement = connection.createStatement();
@@ -42,6 +50,7 @@ public class ExchangeRateDbClient {
             return Optional.of(exchangeRates);
         } catch(SQLException e) {
            e.printStackTrace();
+            System.out.println(e.getMessage());
            return Optional.empty();
         }
     }

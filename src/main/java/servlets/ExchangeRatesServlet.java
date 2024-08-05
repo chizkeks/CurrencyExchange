@@ -1,7 +1,10 @@
 package servlets;
 
 import com.google.gson.Gson;
+import exceptions.CurrencyPairAlreadyExistsException;
+import exceptions.DatabaseConnectionException;
 import jakarta.servlet.ServletConfig;
+import model.Currency;
 import model.ErrorMessage;
 
 
@@ -40,28 +43,27 @@ public class ExchangeRatesServlet extends HttpServlet {
         PrintWriter pw = resp.getWriter();
         String baseCurrencyCode = req.getParameter("baseCurrencyCode");
         String targetCurrencyCode = req.getParameter("targetCurrencyCode");
-        double rate = Double.parseDouble(req.getParameter("rate"));
+        String rate = req.getParameter("rate");
+        System.out.printf("BASE - %s, TARGET - %s; RATE - %s", baseCurrencyCode, targetCurrencyCode, rate);
 
         if(validateRequiredParameters(baseCurrencyCode, targetCurrencyCode, rate)) {
             //Trying to get currencies corresponds to this exchange rate
-            Optional<?> baseCurrency = currencyService.getCurrency(baseCurrencyCode);
-            Optional<?> targetCurrency = currencyService.getCurrency(targetCurrencyCode);
+            Optional<Currency> baseCurrency = currencyService.getCurrency(baseCurrencyCode);
+            Optional<Currency> targetCurrency = currencyService.getCurrency(targetCurrencyCode);
             //If there are both currencies - continue exchange rate creation
             if(baseCurrency.isPresent() && targetCurrency.isPresent()) {
-                //if the rate for the same currency pair already exists
-                if(exchangeRateService.get(baseCurrencyCode, targetCurrencyCode).isPresent()) {
-                    resp.setStatus(409);
-                    pw.println(new Gson().toJson(new ErrorMessage("Валютная пара с таким кодом уже существует ")));
-                } else {
-                    //adding the exchange rate to the database
-                    boolean result = exchangeRateService.createExchangeRate(baseCurrencyCode, targetCurrencyCode, rate);
-                    if(result) {
-                        resp.setStatus(201);
-                        pw.println(new Gson().toJson(exchangeRateService.get(baseCurrencyCode, targetCurrencyCode).isPresent()));
-                    } else {
-                        resp.setStatus(500);
-                    }
-                }
+                //adding the exchange rate to the database
+               try {
+                   exchangeRateService.createExchangeRate(baseCurrency.get().getId(), targetCurrency.get().getId(), Double.parseDouble(rate));
+                   resp.setStatus(201);
+                   pw.println(new Gson().toJson(exchangeRateService.get(baseCurrencyCode, targetCurrencyCode).isPresent()));
+               } catch(DatabaseConnectionException e) {
+                   resp.setStatus(500);
+                   pw.println(new Gson().toJson(new ErrorMessage(e.getMessage())));
+               } catch (CurrencyPairAlreadyExistsException e) {
+                   resp.setStatus(409);
+                   pw.println(new Gson().toJson(new ErrorMessage(e.getMessage())));
+               }
 
             } else {
                 resp.setStatus(404);
@@ -76,14 +78,12 @@ public class ExchangeRatesServlet extends HttpServlet {
     }
 
     //Function checks if exchangeRate parameter has all required fields
-    private boolean validateRequiredParameters(String baseCurrencyCode, String targetCurrencyCode, double rate) {
+    private boolean validateRequiredParameters(String baseCurrencyCode, String targetCurrencyCode, String rate) {
         if(baseCurrencyCode== null || baseCurrencyCode.isEmpty())
             return false;
         if(targetCurrencyCode == null || targetCurrencyCode.isEmpty())
             return false;
-        if(rate == 0)
-            return false;
-        return true;
+        return rate != null && !rate.isEmpty();
     }
 
 }

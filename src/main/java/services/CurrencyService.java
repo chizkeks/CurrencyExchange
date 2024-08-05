@@ -2,8 +2,11 @@ package services;
 
 import dao.CurrencyDAO;
 import dao.CurrencyDAOImplSQLite;
+import exceptions.CurrencyAlreadyExistsException;
+import exceptions.DatabaseConnectionException;
 import model.Currency;
 
+import java.sql.SQLException;
 import java.util.List;
 import java.util.Optional;
 
@@ -16,13 +19,25 @@ public class CurrencyService {
     }
 
     public Optional<List<Currency>> getAllCurrencies() {
-        return currencyDAO.getList();
+        try {
+            return currencyDAO.getList();
+        }catch (SQLException e) {
+            return Optional.empty();
+        } catch (DatabaseConnectionException e) {
+            return Optional.empty();
+        }
     }
 
     public Optional<Currency> getCurrency(String code) {
-        return currencyDAO.getByCode(code);
+        try {
+            return currencyDAO.getByCode(code);
+        }catch (SQLException e) {
+            return Optional.empty();
+        } catch (DatabaseConnectionException e) {
+            return Optional.empty();
+        }
     }
-    public boolean createCurrency(String code, String name, String sign) {
-        return currencyDAO.add(new Currency(code, name, sign));
+    public void createCurrency(String code, String name, String sign) throws CurrencyAlreadyExistsException, DatabaseConnectionException {
+        currencyDAO.add(new Currency(code, name, sign));
     }
 }

@@ -1,9 +1,10 @@
 package servlets;
 
 import com.google.gson.Gson;
+import exceptions.DatabaseConnectionException;
 import jakarta.servlet.ServletConfig;
+import model.Currency;
 import model.ErrorMessage;
-import model.ExchangeRate;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -35,15 +36,14 @@ public class ExchangeRateServlet  extends HttpServlet {
 
         if(pathElements.length == 2 && pathElements[1].length() == 6){
 
-
             //for url http://localhost:8080/CurrencyExchange/currency/RUR pathElements = [, RUR]
             //that's why we pass pathElements[1] to the function
-            Optional<ExchangeRate> rate = exchangeRateService.get(pathElements[1].substring(0, 3), pathElements[1].substring(3));
+            Optional<?> rate = exchangeRateService.get(pathElements[1].substring(0, 3), pathElements[1].substring(3));
             if(rate.isPresent()) {
                 pw.println(new Gson().toJson(rate.get()));
             } else {
                 resp.setStatus(404);
-                pw.println(new Gson().toJson(new ErrorMessage("Обменный курс для пары не найден")));;
+                pw.println(new Gson().toJson(new ErrorMessage("Обменный курс для пары не найден")));
             }
             return;
         }
@@ -54,11 +54,9 @@ public class ExchangeRateServlet  extends HttpServlet {
     @Override
     protected void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         String method = req.getMethod();
-        System.out.println(method);
-        if(!method.equals("PATCH"))
-            super.service(req, resp);
-
-        doPatch(req, resp);
+        super.service(req, resp);
+        if(method.equals("PATCH"))
+            doPatch(req, resp);
     }
 
     protected void doPatch(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
@@ -84,14 +82,17 @@ public class ExchangeRateServlet  extends HttpServlet {
 
             //for url http://localhost:8080/CurrencyExchange/currency/RUR pathElements = [, RUR]
             //that's why we pass pathElements[1] to the function
-            Optional<?> baseCurrency = currencyService.getCurrency(baseCurrencyCode);
-            Optional<?> targetCurrency = currencyService.getCurrency(targetCurrencyCode);
+            Optional<Currency> baseCurrency = currencyService.getCurrency(baseCurrencyCode);
+            Optional<Currency> targetCurrency = currencyService.getCurrency(targetCurrencyCode);
             if(baseCurrency.isPresent() && targetCurrency.isPresent()) {
-                boolean result = exchangeRateService.updateExchangeRate(baseCurrencyCode, targetCurrencyCode, Double.parseDouble(newRate));
-                if(result) {
-                    pw.println(new Gson().toJson(exchangeRateService.get(baseCurrencyCode,targetCurrencyCode)));
-                    return;
-                }
+               try {
+                   exchangeRateService.updateExchangeRate(baseCurrency.get().getId(),
+                           targetCurrency.get().getId(), Double.parseDouble(newRate));
+               } catch(DatabaseConnectionException e) {
+                   resp.setStatus(500);
+               }
+               pw.println(new Gson().toJson(exchangeRateService.get(baseCurrencyCode,targetCurrencyCode)));
+               return;
             }
             resp.setStatus(404);
             pw.println(new Gson().toJson(new ErrorMessage("Валютная пара отсутствует в базе данных")));;

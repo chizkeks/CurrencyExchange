@@ -1,6 +1,8 @@
 package servlets;
 
 import com.google.gson.Gson;
+import exceptions.CurrencyAlreadyExistsException;
+import exceptions.DatabaseConnectionException;
 import jakarta.servlet.ServletConfig;
 import model.Currency;
 import model.ErrorMessage;
@@ -13,6 +15,7 @@ import services.CurrencyService;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.sql.SQLException;
 import java.util.List;
 import java.util.Optional;
 
@@ -28,12 +31,7 @@ public class CurrenciesServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         PrintWriter pw = resp.getWriter();
-        //resp.setContentType("application/json; charset = UTF-8");
-
-        //URL url = ClassLoaderUtil.getResource("test.csv", servlets.CurrenciesServlet.class);
-
-        Optional<List<Currency>> result = service.getAllCurrencies();
-        result.ifPresent(currencies -> pw.println(new Gson().toJson(currencies)));
+        service.getAllCurrencies().ifPresent(currencies -> pw.println(new Gson().toJson(currencies)));
     }
 
     @Override
@@ -44,18 +42,16 @@ public class CurrenciesServlet extends HttpServlet {
         String sign = req.getParameter("sign");
         if(validateRequiredParameters(code, name, sign)) {
 
-            if(service.getCurrency(code).isPresent()) {
-                resp.setStatus(409);
-                pw.println(new Gson().toJson(new ErrorMessage("Валюта с таким кодом уже существует")));
-                return;
-            }
-
-            boolean result = service.createCurrency(req.getParameter("code"), req.getParameter("name"), req.getParameter("sign"));
-            if(result) {
+            try {
+                service.createCurrency(req.getParameter("code"), req.getParameter("name"), req.getParameter("sign"));
                 resp.setStatus(201);
                 pw.println(new Gson().toJson(service.getCurrency(code).get()));
-            } else {
+            }catch (CurrencyAlreadyExistsException e) {
+                resp.setStatus(409);
+                pw.println(new Gson().toJson(new ErrorMessage(e.getMessage())));
+            } catch(DatabaseConnectionException e) {
                 resp.setStatus(500);
+                pw.println(new Gson().toJson(new ErrorMessage(e.getMessage())));
             }
 
         } else {

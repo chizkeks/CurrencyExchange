@@ -4,8 +4,12 @@ import dao.CurrencyDAO;
 import dao.CurrencyDAOImplSQLite;
 import dao.ExchangeRateDAO;
 import dao.ExchangeRateDAOImplSQLite;
+import exceptions.CurrencyPairAlreadyExistsException;
+import exceptions.DatabaseConnectionException;
 import model.ExchangeRate;
+import org.sqlite.SQLiteException;
 
+import java.sql.SQLException;
 import java.util.List;
 import java.util.Optional;
 
@@ -19,18 +23,37 @@ public class ExchangeRateService {
     }
 
     public Optional<ExchangeRate> get(String baseCurrency, String targetCurrency) {
-        return exchangeRateDAO.getByCurrencyPairCode(baseCurrency, targetCurrency);
+        try {
+            return exchangeRateDAO.getByCurrencyPairCode(baseCurrency, targetCurrency);
+        }catch(Exception e) {
+            e.printStackTrace();
+            return Optional.empty();
+        }
     }
 
     public Optional<List<ExchangeRate>> getAllExchangeRates() {
-        return exchangeRateDAO.getList();
+        try {
+            return exchangeRateDAO.getList();
+        }catch(Exception e) {
+            e.printStackTrace();
+            return Optional.empty();
+        }
     }
 
-    public boolean createExchangeRate(String baseCurrencyCode, String targetCurrencyCode, double rate) {
-        return exchangeRateDAO.add(baseCurrencyCode, targetCurrencyCode,rate);
+    public void createExchangeRate(long baseCurrencyId, long targetCurrencyId, double rate)
+            throws DatabaseConnectionException, CurrencyPairAlreadyExistsException {
+        try {
+            exchangeRateDAO.add(baseCurrencyId, targetCurrencyId,rate);
+        }catch(SQLiteException e) {
+            e.printStackTrace();
+            throw new CurrencyPairAlreadyExistsException("Валютная пара с таким кодом уже существует");
+        } catch(SQLException e) {
+            e.printStackTrace();
+            throw new DatabaseConnectionException(e);
+        }
     }
 
-    public boolean updateExchangeRate(String baseCurrencyCode, String targetCurrencyCode, double rate) {
-        return exchangeRateDAO.updateRateByCurrencyPairCode(baseCurrencyCode, targetCurrencyCode, rate);
+    public void updateExchangeRate(long baseCurrencyId, long targetCurrencyId, double rate) throws DatabaseConnectionException {
+        exchangeRateDAO.updateRateByCurrencyPairId(baseCurrencyId, targetCurrencyId, rate);
     }
 }

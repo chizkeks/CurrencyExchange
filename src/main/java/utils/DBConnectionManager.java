@@ -13,6 +13,15 @@ public class DBConnectionManager {
     private static HikariDataSource dataSource;
 
     static {
+
+        //Upload sqlite JDBC driver
+        try {
+            Class.forName("org.sqlite.JDBC");
+        }catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+
+
         URL_KEY = "jdbc:sqlite:" + DBConnectionManager.class.getResource("/db/currency_exchange_db");
 
         config = new HikariConfig();
@@ -21,13 +30,6 @@ public class DBConnectionManager {
         config.addDataSourceProperty("prepStmtCacheSize", "250");
         config.addDataSourceProperty("prepStmtCacheSqlLimit", "2048");
         dataSource = new HikariDataSource( config );
-
-        //Upload sqlite JDBC driver
-        try {
-            Class.forName("org.sqlite.JDBC");
-        }catch (ClassNotFoundException e) {
-            e.printStackTrace();
-        }
     }
 
     private DBConnectionManager() {}
