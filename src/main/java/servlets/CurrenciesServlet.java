@@ -31,7 +31,12 @@ public class CurrenciesServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         PrintWriter pw = resp.getWriter();
-        service.getAllCurrencies().ifPresent(currencies -> pw.println(new Gson().toJson(currencies)));
+        try {
+            service.getAllCurrencies().ifPresent(currencies -> pw.println(new Gson().toJson(currencies)));
+        }catch (SQLException | DatabaseConnectionException e) {
+            resp.setStatus(500);
+            pw.println(new Gson().toJson(new ErrorMessage(e.getMessage())));
+        }
     }
 
     @Override
@@ -49,7 +54,7 @@ public class CurrenciesServlet extends HttpServlet {
             }catch (CurrencyAlreadyExistsException e) {
                 resp.setStatus(409);
                 pw.println(new Gson().toJson(new ErrorMessage(e.getMessage())));
-            } catch(DatabaseConnectionException e) {
+            } catch(SQLException | DatabaseConnectionException e) {
                 resp.setStatus(500);
                 pw.println(new Gson().toJson(new ErrorMessage(e.getMessage())));
             }

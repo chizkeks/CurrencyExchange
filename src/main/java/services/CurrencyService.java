@@ -18,26 +18,14 @@ public class CurrencyService {
         this.currencyDAO = new CurrencyDAOImplSQLite();
     }
 
-    public Optional<List<Currency>> getAllCurrencies() {
-        try {
+    public Optional<List<Currency>> getAllCurrencies() throws SQLException, DatabaseConnectionException{
             return currencyDAO.getList();
-        }catch (SQLException e) {
-            return Optional.empty();
-        } catch (DatabaseConnectionException e) {
-            return Optional.empty();
-        }
     }
 
-    public Optional<Currency> getCurrency(String code) {
-        try {
-            return currencyDAO.getByCode(code);
-        }catch (SQLException e) {
-            return Optional.empty();
-        } catch (DatabaseConnectionException e) {
-            return Optional.empty();
-        }
+    public Optional<Currency> getCurrency(String code) throws SQLException, DatabaseConnectionException{
+        return currencyDAO.getByCode(code);
     }
-    public void createCurrency(String code, String name, String sign) throws CurrencyAlreadyExistsException, DatabaseConnectionException {
+    public void createCurrency(String code, String name, String sign) throws SQLException, CurrencyAlreadyExistsException, DatabaseConnectionException {
         currencyDAO.add(new Currency(code, name, sign));
     }
 }

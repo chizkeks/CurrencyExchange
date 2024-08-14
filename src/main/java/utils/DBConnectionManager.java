@@ -2,7 +2,6 @@ package utils;
 
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
-import dao.ExchangeRateDAOImplSQLite;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -13,7 +12,6 @@ public class DBConnectionManager {
     private static HikariDataSource dataSource;
 
     static {
-
         //Upload sqlite JDBC driver
         try {
             Class.forName("org.sqlite.JDBC");
