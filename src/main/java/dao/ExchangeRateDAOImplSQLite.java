@@ -70,10 +70,7 @@ public class ExchangeRateDAOImplSQLite implements ExchangeRateDAO{
             PreparedStatement statement = connection.prepareStatement(SELECT_ALL);
             ResultSet resultSetItem = statement.executeQuery()) {
                 while(resultSetItem.next()) {
-                    exchangeRates.add(new ExchangeRate(resultSetItem.getLong("exchange_rate_id"),
-                            new Currency(resultSetItem.getLong("basecur_id"), resultSetItem.getString("basecur_fullname"), resultSetItem.getString("basecur_code"), resultSetItem.getString("basecur_sign")),
-                            new Currency(resultSetItem.getLong("targetcur_id"), resultSetItem.getString("targetcur_fullname"), resultSetItem.getString("targetcur_code"), resultSetItem.getString("targetcur_sign")),
-                            resultSetItem.getDouble("rate")));
+                    exchangeRates.add(buildExchangeRate(resultSetItem));
                 }
                 return Optional.of(exchangeRates);
         } catch(SQLException e) {
@@ -91,12 +88,9 @@ public class ExchangeRateDAOImplSQLite implements ExchangeRateDAO{
             statement.setString(2, targetCurrencyCode);
             try(ResultSet resultSetItem = statement.executeQuery()) {
                 while(resultSetItem.next()) {
-                    exchangeRates.add(new ExchangeRate(resultSetItem.getLong("exchange_rate_id"),
-                            new Currency(resultSetItem.getLong("basecur_id"), resultSetItem.getString("basecur_fullname"), resultSetItem.getString("basecur_code"), resultSetItem.getString("basecur_sign")),
-                            new Currency(resultSetItem.getLong("targetcur_id"), resultSetItem.getString("targetcur_fullname"), resultSetItem.getString("targetcur_code"), resultSetItem.getString("targetcur_sign")),
-                            resultSetItem.getDouble("rate")));
+                    exchangeRates.add(buildExchangeRate(resultSetItem));
                 }
-                return Optional.of(exchangeRates.get(0));
+                return exchangeRates.isEmpty() ? Optional.empty() : Optional.of(exchangeRates.get(0));
             } catch(SQLException e) {
                 e.printStackTrace();
                 throw new SQLException(e);
@@ -123,5 +117,13 @@ public class ExchangeRateDAOImplSQLite implements ExchangeRateDAO{
             e.printStackTrace();
             throw new DatabaseConnectionException(e);
         }
+    }
+
+
+    private ExchangeRate buildExchangeRate(ResultSet resultSetItem) throws SQLException {
+        return new ExchangeRate(resultSetItem.getLong("exchange_rate_id"),
+                new Currency(resultSetItem.getLong("basecur_id"), resultSetItem.getString("basecur_fullname"), resultSetItem.getString("basecur_code"), resultSetItem.getString("basecur_sign")),
+                new Currency(resultSetItem.getLong("targetcur_id"), resultSetItem.getString("targetcur_fullname"), resultSetItem.getString("targetcur_code"), resultSetItem.getString("targetcur_sign")),
+                resultSetItem.getDouble("rate"));
     }
 }

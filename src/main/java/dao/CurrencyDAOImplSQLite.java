@@ -49,10 +49,7 @@ public class CurrencyDAOImplSQLite implements CurrencyDAO{
 
                 connection.setAutoCommit(true);
                 while(resultSetItem.next()) {
-                    currencies.add(new Currency(resultSetItem.getLong("id"),
-                            resultSetItem.getString("code"),
-                            resultSetItem.getString("fullname"),
-                            resultSetItem.getString("sign")));
+                    currencies.add(buildCurrency(resultSetItem));
                 }
                 return Optional.of(currencies);
             } catch(SQLException e) {
@@ -64,6 +61,14 @@ public class CurrencyDAOImplSQLite implements CurrencyDAO{
             throw new DatabaseConnectionException(e);
         }
     }
+
+    private Currency buildCurrency(ResultSet resultSetItem) throws SQLException {
+        return new Currency(resultSetItem.getLong("id"),
+                resultSetItem.getString("code"),
+                resultSetItem.getString("fullname"),
+                resultSetItem.getString("sign"));
+    }
+
     @Override
     public Optional<Currency> getByCode(String code) throws SQLException, DatabaseConnectionException{
         List<Currency> currencies = new ArrayList<>();
@@ -73,14 +78,11 @@ public class CurrencyDAOImplSQLite implements CurrencyDAO{
                 ResultSet resultSetItem = statement.executeQuery();
                 connection.setAutoCommit(true);
                 while(resultSetItem.next()) {
-                    currencies.add(new Currency(resultSetItem.getLong("id"),
-                            resultSetItem.getString("code"),
-                            resultSetItem.getString("fullname"),
-                            resultSetItem.getString("sign")));
+                    currencies.add(buildCurrency(resultSetItem));
                 }
                 resultSetItem.close();
                 if(currencies.size() > 1) throw new SQLException("В таблице currencies найдено более одной записи по заданным параметрам: code = " + code);
-                return Optional.of(currencies.get(0));
+                return currencies.isEmpty() ? Optional.empty() : Optional.of(currencies.get(0));
             } catch(SQLException e) {
                 e.printStackTrace();
                 throw new SQLException(e);
