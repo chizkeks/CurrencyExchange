@@ -44,6 +44,14 @@ public class ExchangeRateDAOImplSQLite implements ExchangeRateDAO{
 
     public ExchangeRateDAOImplSQLite() {}
 
+    public static ExchangeRateDAOImplSQLite getInstance() {
+        return ExchangeRateDAOImplSQLiteHelper.singletonObject;
+    }
+
+    private static class ExchangeRateDAOImplSQLiteHelper{
+        public static ExchangeRateDAOImplSQLite singletonObject = new ExchangeRateDAOImplSQLite();
+    }
+
     @Override
     public void add(long baseCurrencyId, long targetCurrencyId, double rate) throws SQLException, DatabaseConnectionException, CurrencyPairAlreadyExistsException {
         try(Connection connection = DBConnectionManager.getConnection()) {
