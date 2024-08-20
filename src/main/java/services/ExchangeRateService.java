@@ -4,8 +4,11 @@ import dao.CurrencyDAO;
 import dao.CurrencyDAOImplSQLite;
 import dao.ExchangeRateDAO;
 import dao.ExchangeRateDAOImplSQLite;
+import dto.CurrencyFilter;
+import dto.ExchangeRateFilter;
 import exceptions.CurrencyPairAlreadyExistsException;
 import exceptions.DatabaseConnectionException;
+import model.Currency;
 import model.ExchangeRate;
 import org.sqlite.SQLiteException;
 
@@ -14,20 +17,21 @@ import java.util.List;
 import java.util.Optional;
 
 public class ExchangeRateService {
-
     private final ExchangeRateDAO exchangeRateDAO;
-    private CurrencyDAO currencyDAO;
     public ExchangeRateService() {
-        this.exchangeRateDAO = new ExchangeRateDAOImplSQLite();
-        this.currencyDAO = new CurrencyDAOImplSQLite();
+        this.exchangeRateDAO = ExchangeRateDAOImplSQLite.getInstance();
     }
 
     public Optional<ExchangeRate> get(String baseCurrency, String targetCurrency) throws SQLException, DatabaseConnectionException {
-        return exchangeRateDAO.getByCurrencyPairCode(baseCurrency, targetCurrency);
+        Optional<List<ExchangeRate>> response = exchangeRateDAO.findAll(new ExchangeRateFilter(baseCurrency, targetCurrency, null, 1,0));
+        if(response.isPresent() && !response.get().isEmpty())
+            return response.map(exchangeRates -> exchangeRates.get(0));
+        else
+            return Optional.empty();
     }
 
     public Optional<List<ExchangeRate>> getAllExchangeRates() throws SQLException, DatabaseConnectionException {
-        return exchangeRateDAO.getList();
+        return exchangeRateDAO.findAll(null);
     }
 
     public void createExchangeRate(long baseCurrencyId, long targetCurrencyId, double rate)
@@ -36,6 +40,6 @@ public class ExchangeRateService {
     }
 
     public void updateExchangeRate(long baseCurrencyId, long targetCurrencyId, double rate) throws DatabaseConnectionException, SQLException{
-        exchangeRateDAO.updateRateByCurrencyPairId(baseCurrencyId, targetCurrencyId, rate);
+        exchangeRateDAO.update(baseCurrencyId, targetCurrencyId, rate);
     }
 }

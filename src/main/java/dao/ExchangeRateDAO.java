@@ -1,5 +1,6 @@
 package dao;
 
+import dto.ExchangeRateFilter;
 import exceptions.CurrencyPairAlreadyExistsException;
 import exceptions.DatabaseConnectionException;
 import model.ExchangeRate;
@@ -11,7 +12,6 @@ import java.util.Optional;
 
 public interface ExchangeRateDAO {
     public void add(long baseCurrencyId, long targetCurrencyId, double rate) throws SQLException, DatabaseConnectionException, CurrencyPairAlreadyExistsException;
-    public Optional<List<ExchangeRate>> getList() throws SQLException, DatabaseConnectionException;
-    public Optional<ExchangeRate>  getByCurrencyPairCode(String baseCurrencyCode, String targetCurrencyCode) throws SQLException, DatabaseConnectionException;
-    public void updateRateByCurrencyPairId(long baseCurrencyId, long targetCurrencyId, double rate) throws SQLException, DatabaseConnectionException;
+    public Optional<List<ExchangeRate>> findAll(ExchangeRateFilter exchangeRateFilter) throws SQLException, DatabaseConnectionException;
+    public void update(long baseCurrencyId, long targetCurrencyId, double rate) throws SQLException, DatabaseConnectionException;
 }
