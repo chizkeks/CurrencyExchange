@@ -18,8 +18,15 @@ import java.util.Optional;
 
 public class ExchangeRateService {
     private final ExchangeRateDAO exchangeRateDAO;
-    public ExchangeRateService() {
+    private ExchangeRateService() {
         this.exchangeRateDAO = ExchangeRateDAOImplSQLite.getInstance();
+    }
+    public static ExchangeRateService getInstance() {
+        return ExchangeRateService.ExchangeRateServiceHelper.singletonObject;
+    }
+
+    private static class ExchangeRateServiceHelper{
+        public static ExchangeRateService singletonObject = new ExchangeRateService();
     }
 
     public Optional<ExchangeRate> get(String baseCurrency, String targetCurrency) throws SQLException, DatabaseConnectionException {

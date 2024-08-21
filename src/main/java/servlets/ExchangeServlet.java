@@ -26,8 +26,8 @@ public class ExchangeServlet extends HttpServlet {
 
     @Override
     public void init(ServletConfig config) {
-        exchangeRateService = new ExchangeRateService();
-        currencyService = new CurrencyService();
+        exchangeRateService = ExchangeRateService.getInstance();
+        currencyService = CurrencyService.getInstance();
     }
 
     @Override

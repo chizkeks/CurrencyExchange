@@ -2,6 +2,7 @@ package services;
 
 import dao.CurrencyDAO;
 import dao.CurrencyDAOImplSQLite;
+import dao.ExchangeRateDAOImplSQLite;
 import dto.CurrencyFilter;
 import exceptions.CurrencyAlreadyExistsException;
 import exceptions.DatabaseConnectionException;
@@ -15,7 +16,15 @@ public class CurrencyService {
 
     private final CurrencyDAO currencyDAO;
 
-    public CurrencyService() {
+    public static CurrencyService getInstance() {
+        return CurrencyService.CurrencyServiceHelper.singletonObject;
+    }
+
+    private static class CurrencyServiceHelper{
+        public static CurrencyService singletonObject = new CurrencyService();
+    }
+
+    private CurrencyService() {
         this.currencyDAO = CurrencyDAOImplSQLite.getInstance();
     }
 

@@ -24,7 +24,7 @@ public class CurrencyServlet extends HttpServlet {
 
     @Override
     public void init(ServletConfig config) throws ServletException {
-        service = new CurrencyService();
+        service = CurrencyService.getInstance();
     }
 
     @Override
