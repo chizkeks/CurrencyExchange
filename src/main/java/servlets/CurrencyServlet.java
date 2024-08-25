@@ -2,6 +2,7 @@ package servlets;
 
 import com.google.gson.Gson;
 import exceptions.DatabaseConnectionException;
+import exceptions.NoSuchCurrencyException;
 import jakarta.servlet.ServletConfig;
 import model.ErrorMessage;
 
@@ -37,12 +38,11 @@ public class CurrencyServlet extends HttpServlet {
             try{
                 //for url http://localhost:8080/CurrencyExchange/currency/RUR pathElements = [, RUR]
                 //that's why we pass pathElements[1] to the function
-                Optional<Currency> result = service.getCurrency(pathElements[1]);
-                if(result.isPresent()) {
-                    pw.println(new Gson().toJson(result.get()));
-                } else {
+                try {
+                    pw.println(new Gson().toJson(service.getCurrency(pathElements[1])));
+                } catch (NoSuchCurrencyException e){
                     resp.setStatus(404);
-                    pw.println(new Gson().toJson(new ErrorMessage("Валюта не найдена")));
+                    pw.println(new Gson().toJson(new ErrorMessage(e.getMessage())));
                 }
                 return;
             }catch (SQLException | DatabaseConnectionException e) {

@@ -1,7 +1,7 @@
 package model;
 
 public class ExchangeRate {
-    private long id;
+    private int id;
     private Currency baseCurrency;
     private Currency targetCurrency;
     private double rate;
@@ -12,14 +12,14 @@ public class ExchangeRate {
         this.targetCurrency = targetCurrency;
         this.rate = rate;
     }
-    public ExchangeRate(long id, Currency baseCurrency, Currency targetCurrency, double rate) {
+    public ExchangeRate(int id, Currency baseCurrency, Currency targetCurrency, double rate) {
         this.id = id;
         this.baseCurrency = baseCurrency;
         this.targetCurrency = targetCurrency;
         this.rate = rate;
     }
 
-    public long getId() {
+    public int getId() {
         return id;
     }
 

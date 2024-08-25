@@ -2,9 +2,11 @@ package servlets;
 
 import com.google.common.base.Splitter;
 import com.google.gson.Gson;
+import dto.CurrencyDto;
 import exceptions.DatabaseConnectionException;
+import exceptions.NoSuchCurrencyException;
+import exceptions.NoSuchExchangeRateException;
 import jakarta.servlet.ServletConfig;
-import model.Currency;
 import model.ErrorMessage;
 
 import jakarta.servlet.ServletException;
@@ -12,14 +14,12 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import model.ExchangeRate;
 import services.CurrencyService;
 import services.ExchangeRateService;
 
 import java.io.*;
 import java.sql.SQLException;
 import java.util.Map;
-import java.util.Optional;
 
 @WebServlet("/exchangeRate/*")
 public class ExchangeRateServlet  extends HttpServlet {
@@ -42,18 +42,15 @@ public class ExchangeRateServlet  extends HttpServlet {
             try {
                 //for url http://localhost:8080/CurrencyExchange/currency/RUR pathElements = [, RUR]
                 //that's why we pass pathElements[1] to the function
-                Optional<ExchangeRate> rate = exchangeRateService.get(pathElements[1].substring(0, 3), pathElements[1].substring(3));
-                if (rate.isPresent()) {
-                    pw.println(new Gson().toJson(rate.get()));
-                } else {
-                    resp.setStatus(404);
-                    pw.println(new Gson().toJson(new ErrorMessage("Обменный курс для пары не найден")));
-                }
+                pw.println(new Gson().toJson(exchangeRateService.get(pathElements[1].substring(0, 3), pathElements[1].substring(3))));
                 return;
-            }catch (SQLException | DatabaseConnectionException e) {
-                    resp.setStatus(500);
-                    pw.println(new Gson().toJson(new ErrorMessage(e.getMessage())));
-                }
+            } catch(NoSuchExchangeRateException e) {
+                resp.setStatus(404);
+                pw.println(new Gson().toJson(new ErrorMessage("Обменный курс для пары не найден")));
+            } catch(SQLException | DatabaseConnectionException e) {
+                resp.setStatus(500);
+                pw.println(new Gson().toJson(new ErrorMessage(e.getMessage())));
+            }
         }
         resp.setStatus(400);
         pw.println(new Gson().toJson(new ErrorMessage("Коды валют пары отсутствуют в адресе")));
@@ -100,24 +97,28 @@ public class ExchangeRateServlet  extends HttpServlet {
             try {
                 //for url http://localhost:8080/CurrencyExchange/currency/RUR pathElements = [, RUR]
                 //that's why we pass pathElements[1] to the function
-                Optional<Currency> baseCurrency = currencyService.getCurrency(baseCurrencyCode);
-                Optional<Currency> targetCurrency = currencyService.getCurrency(targetCurrencyCode);
-                if(baseCurrency.isPresent() && targetCurrency.isPresent()) {
-                    exchangeRateService.updateExchangeRate(baseCurrency.get().getId(),
-                            targetCurrency.get().getId(), Double.parseDouble(newRate));
-                }
+                CurrencyDto baseCurrency = currencyService.getCurrency(baseCurrencyCode);
+                CurrencyDto targetCurrency = currencyService.getCurrency(targetCurrencyCode);
+
+                exchangeRateService.updateExchangeRate(baseCurrency.getId(),
+                        targetCurrency.getId(), Double.parseDouble(newRate));
+
                 pw.println(new Gson().toJson(exchangeRateService.get(baseCurrencyCode,targetCurrencyCode)));
                 return;
 
-            }catch (SQLException | DatabaseConnectionException e) {
+            } catch(NoSuchExchangeRateException e) {
+                resp.setStatus(400);
+                pw.println(new Gson().toJson(new ErrorMessage("Курс для валютной пары не найден")));
+            } catch(NoSuchCurrencyException e) {
+                resp.setStatus(404);
+                pw.println(new Gson().toJson(new ErrorMessage("Одна (или обе) валюта из валютной пары не существует в БД")));
+            } catch (SQLException | DatabaseConnectionException e) {
                 resp.setStatus(500);
                 pw.println(new Gson().toJson(new ErrorMessage(e.getMessage())));
             }
-            resp.setStatus(404);
-            pw.println(new Gson().toJson(new ErrorMessage("Валютная пара отсутствует в базе данных")));;
-            return;
+        } else {
+            resp.setStatus(400);
+            pw.println(new Gson().toJson(new ErrorMessage("Коды валют пары отсутствуют в адресе")));
         }
-        resp.setStatus(400);
-        pw.println(new Gson().toJson(new ErrorMessage("Коды валют пары отсутствуют в адресе")));
     }
 }

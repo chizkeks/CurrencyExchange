@@ -1,10 +1,13 @@
 package servlets;
 
 import com.google.gson.Gson;
+import dto.CurrencyDto;
+import dto.ExchangeRateDto;
 import exceptions.DatabaseConnectionException;
+import exceptions.NoSuchCurrencyException;
+import exceptions.NoSuchExchangeRateException;
 import jakarta.servlet.ServletConfig;
 import model.ErrorMessage;
-import model.ExchangeRate;
 import model.ExchangeResult;
 
 import jakarta.servlet.annotation.WebServlet;
@@ -17,7 +20,6 @@ import services.ExchangeRateService;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.sql.SQLException;
-import java.util.Optional;
 
 @WebServlet("/exchange")
 public class ExchangeServlet extends HttpServlet {
@@ -40,44 +42,54 @@ public class ExchangeServlet extends HttpServlet {
 
         if(validateRequiredParams(from, to, amountString)) {
             try {
-                Optional<?> fromCurrency = currencyService.getCurrency(from);
-                Optional<?> toCurrency = currencyService.getCurrency(to);
+                //Trying to get both currencies (if ok - continue, else - NoSuchCurrencyException)
+                CurrencyDto fromCurrency = currencyService.getCurrency(from);
+                CurrencyDto toCurrency = currencyService.getCurrency(to);
 
-                if(fromCurrency.isEmpty() && toCurrency.isEmpty()) {
-                    resp.setStatus(404);
-                    pw.println(new Gson().toJson(new ErrorMessage("Валютная пара отсутствует в базе данных")));
-                    return;
-                }
+                ExchangeRateDto rate;
                 //1. В таблице ExchangeRates существует валютная пара AB - берём её курс
 
-                    Optional<ExchangeRate> rate = exchangeRateService.get(from, to);
-                    if(rate.isPresent()) {
-                        pw.println(new Gson().toJson(new ExchangeResult(rate.get().getBaseCurrency(), rate.get().getTargetCurrency(), rate.get().getRate(), Double.parseDouble(amountString))));
-                        return;
-                    }
+                try {
+                    rate = exchangeRateService.get(from, to);
+                    pw.println(new Gson().toJson(new ExchangeResult(rate.getBaseCurrency(), rate.getTargetCurrency(), rate.getRate(), Double.parseDouble(amountString))));
+                    return;
+                } catch(NoSuchExchangeRateException e) {
+                    //Just ignore and get to the other condition
+                    e.printStackTrace();
+                }
 
-                    //2. В таблице ExchangeRates существует валютная пара BA - берем её курс, и считаем обратный, чтобы получить AB
+                //2. В таблице ExchangeRates существует валютная пара BA - берем её курс, и считаем обратный, чтобы получить AB
+                try {
                     rate = exchangeRateService.get(to, from);
-                    if(rate.isPresent()) {
-                        pw.println(new Gson().toJson(new ExchangeResult(rate.get().getBaseCurrency(), rate.get().getTargetCurrency(), rate.get().getRate(), Double.parseDouble(amountString))));
-                        return;
-                    }
+                    pw.println(new Gson().toJson(new ExchangeResult(rate.getBaseCurrency(), rate.getTargetCurrency(), rate.getRate(), Double.parseDouble(amountString))));
+                    return;
+                } catch(NoSuchExchangeRateException e) {
+                    //Just ignore and get to the other condition
+                    e.printStackTrace();
+                }
 
-                    //3. В таблице ExchangeRates существуют валютные пары USD-A и USD-B - вычисляем из этих курсов курс AB
+                //3. В таблице ExchangeRates существуют валютные пары USD-A и USD-B - вычисляем из этих курсов курс AB
+                try {
                     rate = exchangeRateService.get("USD", to);
-                    Optional<ExchangeRate> rateToUSD = exchangeRateService.get("USD", from);
-                    if(rate.isPresent() && rateToUSD.isPresent()) {
-                        pw.println(new Gson().toJson(new ExchangeResult(rate.get().getBaseCurrency(), rate.get().getTargetCurrency(), rate.get().getRate(), Double.parseDouble(amountString))));
-                        return;
-                    }
+                    ExchangeRateDto rateToUSD = exchangeRateService.get("USD", from);
+                    pw.println(new Gson().toJson(new ExchangeResult(rate.getBaseCurrency(), rate.getTargetCurrency(), rate.getRate(), Double.parseDouble(amountString))));
+                    return;
+                } catch(NoSuchExchangeRateException e) {
+                    resp.setStatus(400);
+                    pw.println(new Gson().toJson(new ErrorMessage("Курс для валютной пары не найден")));
+                }
+            }  catch(NoSuchCurrencyException e) {
+                resp.setStatus(404);
+                pw.println(new Gson().toJson(new ErrorMessage("Одна (или обе) валюта из валютной пары не существует в БД")));
             } catch(SQLException | DatabaseConnectionException e) {
                 resp.setStatus(500);
                 pw.println(new Gson().toJson(new ErrorMessage(e.getMessage())));
             }
 
+        } else {
+            resp.setStatus(400);
+            pw.println(new Gson().toJson(new ErrorMessage("Отсутствует нужное поле формы")));
         }
-        resp.setStatus(400);
-        pw.println(new Gson().toJson(new ErrorMessage("Отсутствует нужное поле формы")));
     }
 
     private boolean validateRequiredParams(String from, String to, String amount) {

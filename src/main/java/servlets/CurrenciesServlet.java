@@ -1,10 +1,10 @@
 package servlets;
 
 import com.google.gson.Gson;
+import dto.CurrencyDto;
 import exceptions.CurrencyAlreadyExistsException;
 import exceptions.DatabaseConnectionException;
 import jakarta.servlet.ServletConfig;
-import model.Currency;
 import model.ErrorMessage;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -16,8 +16,6 @@ import services.CurrencyService;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.sql.SQLException;
-import java.util.List;
-import java.util.Optional;
 
 @WebServlet("/currencies")
 public class CurrenciesServlet extends HttpServlet {
@@ -32,7 +30,7 @@ public class CurrenciesServlet extends HttpServlet {
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         PrintWriter pw = resp.getWriter();
         try {
-            service.getAllCurrencies().ifPresent(currencies -> pw.println(new Gson().toJson(currencies)));
+            pw.println(new Gson().toJson(service.getAllCurrencies()));
         }catch (SQLException | DatabaseConnectionException e) {
             resp.setStatus(500);
             pw.println(new Gson().toJson(new ErrorMessage(e.getMessage())));
@@ -48,9 +46,9 @@ public class CurrenciesServlet extends HttpServlet {
         if(validateRequiredParameters(code, name, sign)) {
 
             try {
-                service.createCurrency(req.getParameter("code"), req.getParameter("name"), req.getParameter("sign"));
+                CurrencyDto newCurrency = new CurrencyDto(req.getParameter("code"), req.getParameter("name"), req.getParameter("sign"));
                 resp.setStatus(201);
-                pw.println(new Gson().toJson(service.getCurrency(code).get()));
+                pw.println(new Gson().toJson(service.createCurrency(newCurrency)));
             }catch (CurrencyAlreadyExistsException e) {
                 resp.setStatus(409);
                 pw.println(new Gson().toJson(new ErrorMessage(e.getMessage())));
@@ -71,8 +69,6 @@ public class CurrenciesServlet extends HttpServlet {
             return false;
         if(name == null || name.isEmpty())
             return false;
-        if(sign == null || sign.isEmpty())
-            return false;
-        return true;
+        return sign != null && !sign.isEmpty();
     }
 }

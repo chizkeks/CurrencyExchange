@@ -29,14 +29,17 @@ public class CurrencyDAOImplSQLite implements CurrencyDAO{
     private CurrencyDAOImplSQLite() {}
 
     @Override
-    public void add(Currency currency) throws SQLException, CurrencyAlreadyExistsException, DatabaseConnectionException {
+    public int add(Currency currency) throws SQLException, CurrencyAlreadyExistsException, DatabaseConnectionException {
         try (Connection connection = DBConnectionManager.getConnection()) {
-            try (PreparedStatement statement = connection.prepareStatement(INSERT_DATA)) {
+            try (PreparedStatement statement = connection.prepareStatement(INSERT_DATA, Statement.RETURN_GENERATED_KEYS)) {
                 statement.setString(1, currency.getCode());
                 statement.setString(2, currency.getFullName());
                 statement.setString(3, currency.getSign());
                 connection.setAutoCommit(true);
                 statement.executeUpdate();
+                ResultSet keys = statement.getGeneratedKeys();
+                if(keys.next())
+                    return keys.getInt("id");
             } catch (SQLiteException e) {
                 throw new CurrencyAlreadyExistsException("Валюта с таким кодом уже существует");
             } catch (SQLException e) {
@@ -46,11 +49,11 @@ public class CurrencyDAOImplSQLite implements CurrencyDAO{
         } catch (SQLException e) {
             e.printStackTrace();
             throw new DatabaseConnectionException(e);
-
         }
+        return 0;
     }
 
-    public Optional<List<Currency>> findAll(CurrencyFilter currencyFilter) throws SQLException, DatabaseConnectionException {
+    public List<Currency> findAll(CurrencyFilter currencyFilter) throws SQLException, DatabaseConnectionException {
         List<Object> parameters = new ArrayList<>();
         String sqlQuery = SELECT_ALL;
         if(currencyFilter != null) {
@@ -86,7 +89,7 @@ public class CurrencyDAOImplSQLite implements CurrencyDAO{
                 while(resultSetItem.next()) {
                     currencies.add(buildCurrency(resultSetItem));
                 }
-                return Optional.of(currencies);
+                return currencies;
             } catch(SQLException e) {
                 e.printStackTrace();
                 throw new SQLException(e);
@@ -97,7 +100,7 @@ public class CurrencyDAOImplSQLite implements CurrencyDAO{
         }
     }
     private Currency buildCurrency(ResultSet resultSetItem) throws SQLException {
-        return new Currency(resultSetItem.getLong("id"),
+        return new Currency(resultSetItem.getInt("id"),
                 resultSetItem.getString("code"),
                 resultSetItem.getString("fullname"),
                 resultSetItem.getString("sign"));

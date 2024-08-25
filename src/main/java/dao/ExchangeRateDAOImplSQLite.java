@@ -11,7 +11,6 @@ import utils.DBConnectionManager;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class ExchangeRateDAOImplSQLite implements ExchangeRateDAO{
@@ -42,14 +41,17 @@ public class ExchangeRateDAOImplSQLite implements ExchangeRateDAO{
     }
 
     @Override
-    public void add(long baseCurrencyId, long targetCurrencyId, double rate) throws SQLException, DatabaseConnectionException, CurrencyPairAlreadyExistsException {
+    public int add(int baseCurrencyId, int targetCurrencyId, double rate) throws SQLException, DatabaseConnectionException, CurrencyPairAlreadyExistsException {
         try(Connection connection = DBConnectionManager.getConnection()) {
-            try(PreparedStatement statement = connection.prepareStatement(INSERT_DATA)) {
+            try(PreparedStatement statement = connection.prepareStatement(INSERT_DATA, Statement.RETURN_GENERATED_KEYS)) {
                 connection.setAutoCommit(true);
                 statement.setLong(1, baseCurrencyId);
                 statement.setLong(2, targetCurrencyId);
                 statement.setDouble(3, rate);
                 statement.executeUpdate();
+                ResultSet keys = statement.getGeneratedKeys();
+                if(keys.next())
+                    return keys.getInt("id");
             } catch(SQLiteException e) {
                 e.printStackTrace();
                 throw new CurrencyPairAlreadyExistsException("Валютная пара с таким кодом уже существует");
@@ -58,10 +60,11 @@ public class ExchangeRateDAOImplSQLite implements ExchangeRateDAO{
             e.printStackTrace();
             throw new DatabaseConnectionException(e);
         }
+        return 0;
     }
 
     @Override
-    public Optional<List<ExchangeRate>> findAll(ExchangeRateFilter exchangeRateFilter) throws SQLException, DatabaseConnectionException{
+    public List<ExchangeRate> findAll(ExchangeRateFilter exchangeRateFilter) throws SQLException, DatabaseConnectionException{
         List<Object> parameters = new ArrayList<>();
         String sqlQuery = SELECT_ALL;
         if(exchangeRateFilter != null) {
@@ -96,7 +99,7 @@ public class ExchangeRateDAOImplSQLite implements ExchangeRateDAO{
                 while (resultSetItem.next()) {
                     exchangeRates.add(buildExchangeRate(resultSetItem));
                 }
-                return Optional.of(exchangeRates);
+                return exchangeRates;
             } catch(SQLException e) {
                 e.printStackTrace();
                 throw new SQLException(e);
@@ -109,13 +112,13 @@ public class ExchangeRateDAOImplSQLite implements ExchangeRateDAO{
     }
 
     @Override
-    public void update(long baseCurrencyId, long targetCurrencyId, double rate) throws SQLException, DatabaseConnectionException {
+    public void update(int baseCurrencyId, int targetCurrencyId, double rate) throws SQLException, DatabaseConnectionException {
         try(Connection connection = DBConnectionManager.getConnection()) {
             try(PreparedStatement statement = connection.prepareStatement(UPDATE_EXCHANGE_RATE)) {
                 connection.setAutoCommit(true);
                 statement.setDouble(1, rate);
-                statement.setLong(2, baseCurrencyId);
-                statement.setLong(3, targetCurrencyId);
+                statement.setInt(2, baseCurrencyId);
+                statement.setInt(3, targetCurrencyId);
                 statement.executeUpdate();
             } catch (SQLException e) {
                 e.printStackTrace();
@@ -127,9 +130,9 @@ public class ExchangeRateDAOImplSQLite implements ExchangeRateDAO{
         }
     }
     private ExchangeRate buildExchangeRate(ResultSet resultSetItem) throws SQLException {
-        return new ExchangeRate(resultSetItem.getLong("exchange_rate_id"),
-                new Currency(resultSetItem.getLong("basecur_id"), resultSetItem.getString("basecur_fullname"), resultSetItem.getString("basecur_code"), resultSetItem.getString("basecur_sign")),
-                new Currency(resultSetItem.getLong("targetcur_id"), resultSetItem.getString("targetcur_fullname"), resultSetItem.getString("targetcur_code"), resultSetItem.getString("targetcur_sign")),
+        return new ExchangeRate(resultSetItem.getInt("exchange_rate_id"),
+                new Currency(resultSetItem.getInt("basecur_id"), resultSetItem.getString("basecur_fullname"), resultSetItem.getString("basecur_code"), resultSetItem.getString("basecur_sign")),
+                new Currency(resultSetItem.getInt("targetcur_id"), resultSetItem.getString("targetcur_fullname"), resultSetItem.getString("targetcur_code"), resultSetItem.getString("targetcur_sign")),
                 resultSetItem.getDouble("rate"));
     }
 

@@ -8,10 +8,9 @@ import org.sqlite.SQLiteException;
 
 import java.sql.SQLException;
 import java.util.List;
-import java.util.Optional;
 
 public interface ExchangeRateDAO {
-    public void add(long baseCurrencyId, long targetCurrencyId, double rate) throws SQLException, DatabaseConnectionException, CurrencyPairAlreadyExistsException;
-    public Optional<List<ExchangeRate>> findAll(ExchangeRateFilter exchangeRateFilter) throws SQLException, DatabaseConnectionException;
-    public void update(long baseCurrencyId, long targetCurrencyId, double rate) throws SQLException, DatabaseConnectionException;
+    public int add(int baseCurrencyId, int targetCurrencyId, double rate) throws SQLException, DatabaseConnectionException, CurrencyPairAlreadyExistsException;
+    public List<ExchangeRate> findAll(ExchangeRateFilter exchangeRateFilter) throws SQLException, DatabaseConnectionException;
+    public void update(int baseCurrencyId, int targetCurrencyId, double rate) throws SQLException, DatabaseConnectionException;
 }
